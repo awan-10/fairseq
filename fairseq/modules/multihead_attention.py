@@ -304,6 +304,7 @@ class MultiheadAttention(nn.Module):
             # it is preferred to bypass the pytorch MHA when we need to skip embed_dim_check
             and not self.skip_embed_dim_check
         ):
+            print(f"inside multi head.")
             assert key is not None and value is not None
             return F.multi_head_attention_forward(
                 query,
@@ -342,8 +343,18 @@ class MultiheadAttention(nn.Module):
 
         if self.self_attention:
             q = self.q_proj(query)
-            k = self.k_proj(query)
             v = self.v_proj(query)
+            k = self.k_proj(query)
+            #q = torch.matmul(query, self.q_proj.weight.t())
+            #k = torch.matmul(query, self.k_proj.weight.t())
+            #v = torch.matmul(query, self.v_proj.weight.t())
+            #catted = torch.cat((self.q_proj.weight, self.k_proj.weight, self.v_proj.weight), dim=0).t().contiguous()
+            #out = torch.matmul(query, catted)
+            #print(f"query norm = {query.norm()} and out norm = {out.norm()}") #and query = {query}, catted={catted}, new out = {out}")
+            print(f"qkv norm is {torch.cat((q, k, v), dim=-1).norm()}")
+            #print(f"qkv cat = {catted}")
+            #print(f"query norm is {query.norm()}")
+            #print(f"qkvw norm is {torch.cat((self.q_proj.weight, self.k_proj.weight, self.v_proj.weight), dim=-1).norm()}")
         elif self.encoder_decoder_attention:
             # encoder-decoder attention
             q = self.q_proj(query)
@@ -362,6 +373,7 @@ class MultiheadAttention(nn.Module):
         q *= self.scaling
 
         if self.bias_k is not None:
+            print(f"self.bias_k = {self.bias_k} and self.biasv={self.bias_v}")
             assert self.bias_v is not None
             k = torch.cat([k, self.bias_k.repeat(1, bsz, 1)])
             v = torch.cat([v, self.bias_v.repeat(1, bsz, 1)])
@@ -447,6 +459,7 @@ class MultiheadAttention(nn.Module):
             assert key_padding_mask.size(0) == bsz
             assert key_padding_mask.size(1) == src_len
 
+        print(f"self.add_zero_attn = {self.add_zero_attn}")
         if self.add_zero_attn:
             assert v is not None
             src_len += 1
@@ -473,12 +486,14 @@ class MultiheadAttention(nn.Module):
         assert list(attn_weights.size()) == [bsz * self.num_heads, tgt_len, src_len]
 
         if attn_mask is not None:
+            print(f"attn_mask = {attn_mask}")
             attn_mask = attn_mask.unsqueeze(0)
             if self.onnx_trace:
                 attn_mask = attn_mask.repeat(attn_weights.size(0), 1, 1)
             attn_weights += attn_mask
 
         if key_padding_mask is not None:
+            print(f"key_padding_mask = {key_padding_mask}")
             # don't attend to padding symbols
             attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
             if not is_tpu:
@@ -510,6 +525,7 @@ class MultiheadAttention(nn.Module):
             attn = attn.contiguous().view(tgt_len, bsz, self.embed_dim)
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, self.embed_dim)
+        print(f"atten in fairseq before out-proj = {attn.norm()}")
         attn = self.out_proj(attn)
         attn_weights: Optional[Tensor] = None
         if need_weights:

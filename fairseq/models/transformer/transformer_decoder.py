@@ -337,7 +337,8 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
                 self_attn_mask = self.buffered_future_mask(x)
             else:
                 self_attn_mask = None
-
+            #print(f"self_attn_mask = {self_attn_mask}, layer={layer}")
+            print(f"input norm in fairseq= {x.norm()}")
             x, layer_attn, _ = layer(
                 x,
                 enc,
@@ -348,10 +349,22 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
                 need_attn=bool((idx == alignment_layer)),
                 need_head_weights=bool((idx == alignment_layer)),
             )
+            #print(f"out norm={torch.norm(x)}, outputlayer_attn={layer_attn}")
+            #exit(0)
+            # debug why we are not returning a tuple
+            #if type(return_out) is tuple:
+            #    x, layer_attn = return_out 
+            #else:
+            #    x = return_out
+            #    layer_attn = None
+            #print("exiting...")
+            #exit(0)
+            
             inner_states.append(x)
             if layer_attn is not None and idx == alignment_layer:
                 attn = layer_attn.float().to(x)
-
+        #exit(0)
+        
         if attn is not None:
             if alignment_heads is not None:
                 attn = attn[:alignment_heads]

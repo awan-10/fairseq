@@ -748,6 +748,7 @@ class EnsembleModel(nn.Module):
             for m in models
         ):
             self.has_incremental = True
+        self.counter = 0
 
     def forward(self):
         pass
@@ -795,6 +796,19 @@ class EnsembleModel(nn.Module):
                     encoder_out=encoder_out,
                     incremental_state=incremental_states[i],
                 )
+                #import pdb
+                #pdb.set_trace()
+                #print(f"-----> {incremental_states}")
+                #for k in range(len(incremental_states[i])):
+                #    print(f"incremental_states[i] = {incremental_states[i][k]}")
+
+                for i in range(len(decoder_out[1]['inner_states'])):
+                    print(f"{self.counter}, norm = {decoder_out[1]['inner_states'][i].norm()}")
+                self.counter += 1
+                #if self.counter == 2:
+                #    exit(0)
+                #import pdb
+                #pdb.set_trace()
             else:
                 if hasattr(model, "decoder"):
                     decoder_out = model.decoder.forward(tokens, encoder_out=encoder_out)
