@@ -141,8 +141,8 @@ class MultiheadAttention(nn.Module):
                 weights for each head. Implies *need_weights*. Default:
                 return the average attention weights over all heads.
         """
-        if key_padding_mask is not None:
-            print(f"key_padding_mask in multi-head attn = {key_padding_mask.size(0)}, {key_padding_mask.size(1)}")
+        #if key_padding_mask is not None:
+        #    print(f"key_padding_mask in multi-head attn = {key_padding_mask.size(0)}, {key_padding_mask.size(1)}")
         if need_head_weights:
             need_weights = True
 
@@ -308,7 +308,7 @@ class MultiheadAttention(nn.Module):
             key_padding_mask = None
 
         if key_padding_mask is not None:
-            print(f"mask = {key_padding_mask.size(0)}, {key_padding_mask.size(1)}, src_len = {src_len}")
+            #print(f"mask = {key_padding_mask.size(0)}, {key_padding_mask.size(1)}, src_len = {src_len}")
             assert key_padding_mask.size(0) == bsz
             assert key_padding_mask.size(1) == src_len
 

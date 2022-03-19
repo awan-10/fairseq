@@ -1,0 +1,1 @@
+python -m fairseq_cli.interactive  ../fairseq/data-bin/wikitext-103/ --path ../downloads/en_dense_lm_125m/model.pt  --distributed-world-size 2 --model-overrides "{'world_size': 2 }"   --task language_modeling --input input.txt

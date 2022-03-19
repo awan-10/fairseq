@@ -501,8 +501,8 @@ class TransformerDecoderLayer(nn.Module):
             y = torch.cat((encoder_out, x), dim=0)
         else:
             y = x
-        if self_attn_padding_mask is not None: 
-            print(f"calling self_attn with mask = {self_attn_padding_mask.size(0)}, {self_attn_padding_mask.size(1)}")
+        #if self_attn_padding_mask is not None: 
+        #    print(f"calling self_attn with mask = {self_attn_padding_mask.size(0)}, {self_attn_padding_mask.size(1)}")
         x, attn = self.self_attn(
             query=x,
             key=y,
