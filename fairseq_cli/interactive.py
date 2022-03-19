@@ -25,6 +25,7 @@ from fairseq.dataclass.utils import convert_namespace_to_omegaconf
 from fairseq.token_generation_constraints import pack_constraints, unpack_constraints
 from fairseq_cli.generate import get_symbols_to_strip_from_output
 
+from omegaconf import DictConfig
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -105,7 +106,8 @@ def make_batches(lines, cfg, task, max_positions, encode_fn):
         )
 
 
-def main(cfg: FairseqConfig):
+#def main(cfg: FairseqConfig):
+def main(cfg: DictConfig, **unused_kwargs):
     if isinstance(cfg, Namespace):
         cfg = convert_namespace_to_omegaconf(cfg)
 
@@ -127,20 +129,50 @@ def main(cfg: FairseqConfig):
         or cfg.dataset.batch_size <= cfg.interactive.buffer_size
     ), "--batch-size cannot be larger than --buffer-size"
 
-    logger.info(cfg)
-
+    logger.info('---------------------------')
+    logger.info('cfg:')
+    config_content = getattr(cfg, "_content")
+    for config_key in config_content:
+        logger.info(config_key + '\t' + str(config_content[config_key]) + 
+        '\n')
+    logger.info('---------------------------')
+    
     # Fix seed for stochastic decoding
     if cfg.common.seed is not None and not cfg.generation.no_seed_provided:
         np.random.seed(cfg.common.seed)
         utils.set_torch_seed(cfg.common.seed)
 
-    use_cuda = torch.cuda.is_available() and not cfg.common.cpu
-
+    logger.info("loading model(s) from {}".format(cfg.common_eval.path))
+    model_overrides = eval(cfg.common_eval.model_overrides)
+    is_base_moe = model_overrides.get('is_base_moe', False)
+    if cfg.common_eval.is_moe or is_base_moe:
+        rank = distributed_utils.get_data_parallel_rank()
+        cfg.checkpoint.checkpoint_suffix = f"-rank-{rank}"
+        is_moe = True
+        # This is required for making all_to_all work on same sized tensors across gpus.
+        cfg['task']['pad_to_fixed_length'] = True
+    else:
+        is_moe = False
     # Setup task, e.g., translation
     task = tasks.setup_task(cfg.task)
+    
+    model_overrides['batch_size_valid'] = cfg.dataset.batch_size
+    models, model_args, task = checkpoint_utils.load_model_ensemble_and_task(
+        utils.split_paths(cfg.common_eval.path),
+        arg_overrides=model_overrides,
+        suffix=cfg.checkpoint.checkpoint_suffix,
+        strict=(cfg.checkpoint.checkpoint_shard_count == 1),
+        num_shards=cfg.checkpoint.checkpoint_shard_count,
+        task=task,
+        is_moe=is_moe or is_base_moe,
+    )
+    use_fp16 = cfg.common.fp16
+    use_cuda = torch.cuda.is_available() and not cfg.common.cpu
+    if use_cuda:
+        torch.cuda.set_device(cfg.distributed_training.device_id)
 
     # Load ensemble
-    overrides = ast.literal_eval(cfg.common_eval.model_overrides)
+    ''' overrides = ast.literal_eval(cfg.common_eval.model_overrides)
     logger.info("loading model(s) from {}".format(cfg.common_eval.path))
     models, _model_args = checkpoint_utils.load_model_ensemble(
         utils.split_paths(cfg.common_eval.path),
@@ -150,20 +182,29 @@ def main(cfg: FairseqConfig):
         strict=(cfg.checkpoint.checkpoint_shard_count == 1),
         num_shards=cfg.checkpoint.checkpoint_shard_count,
     )
-
+    '''
     # Set dictionaries
     src_dict = task.source_dictionary
     tgt_dict = task.target_dictionary
+
+    use_cuda = torch.cuda.is_available() and not cfg.common.cpu
+    if use_cuda:
+        torch.cuda.set_device(cfg.distributed_training.device_id)
 
     # Optimize ensemble for generation
     for model in models:
         if model is None:
             continue
         if cfg.common.fp16:
-            model.half()
+            pass #model.half()
         if use_cuda and not cfg.distributed_training.pipeline_model_parallel:
             model.cuda()
-        model.prepare_for_inference_(cfg)
+
+        if is_moe:
+            # For moe models, we want to enable padding in moe layer, so not calling this.
+            model.prepare_for_inference_(cfg)
+
+    assert len(models) > 0
 
     # Initialize generator
     generator = task.build_generator(models, cfg.generation)
@@ -224,6 +265,7 @@ def main(cfg: FairseqConfig):
                 },
             }
             translate_start_time = time.time()
+            print(f"inference step on sample = {sample}, constraints = {constraints}")
             translations = task.inference_step(
                 generator, models, sample, constraints=constraints
             )

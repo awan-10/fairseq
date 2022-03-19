@@ -1,0 +1,1 @@
+python -m fairseq_cli.interactive  ../fairseq/data-bin/wikitext-103/ --path ../downloads/en_moe_lm_15b/model.pt --is-moe  --distributed-world-size 2 --model-overrides "{'world_size': 2, 'moe_eval_capacity_token_fraction': 0.05}"   --task language_modeling --input input.txt
