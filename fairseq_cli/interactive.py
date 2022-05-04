@@ -166,6 +166,9 @@ def main(cfg: DictConfig, **unused_kwargs):
         task=task,
         is_moe=is_moe or is_base_moe,
     )
+    import deepspeed
+    deepspeed.init_inference(models[0], dtype=torch.half, replace_with_kernel_inject=True)
+    
     use_fp16 = cfg.common.fp16
     use_cuda = torch.cuda.is_available() and not cfg.common.cpu
     if use_cuda:
