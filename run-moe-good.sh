@@ -1,4 +1,5 @@
-world_size=2
+export NCCL_DEBUG=WARN
+world_size=8
 modelname='15b'
 #modelname='52b'
 
