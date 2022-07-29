@@ -81,8 +81,8 @@ class MOELayer(Base):
             self.experts = cast(ModuleList, experts)
         else:
             self.experts = ModuleList([experts])
-        self.expert_group = group if group is not None else distributed_utils.get_moe_group(args.moe_expert_count)
-        self.all2all_group = all2all_group if all2all_group is not None else distributed_utils.get_all2all_group(args.moe_expert_count)
+        self.expert_group = group if group is not None else distributed_utils.get_moe_group(len(self.experts)) #args.moe_expert_count)
+        self.all2all_group = all2all_group if all2all_group is not None else distributed_utils.get_all2all_group(len(self.experts)) #args.moe_expert_count)
         for p in experts.parameters():
             p.expert = True  # type: ignore
         self.world_size = distributed_utils.get_world_size(self.expert_group)

@@ -44,7 +44,7 @@ def is_master(cfg: DistributedTrainingConfig):
     return cfg.distributed_rank == 0
 
 
-def infer_init_method(cfg: DistributedTrainingConfig, force_distributed=False):
+def infer_init_method(cfg: DistributedTrainingConfig, force_distributed=True):
     if cfg.distributed_init_method is not None or cfg.tpu:
         return
 
@@ -261,6 +261,7 @@ def distributed_init(cfg: FairseqConfig):
                     cfg.distributed_training.distributed_init_method,
                 )
             )
+            print(f"---------------init pg {cfg.distributed_training.distributed_world_size} >>> \n\n >>> \n\n")
             dist.init_process_group(
                 backend=cfg.distributed_training.distributed_backend,
                 init_method=cfg.distributed_training.distributed_init_method,

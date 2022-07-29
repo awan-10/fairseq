@@ -49,20 +49,22 @@ class FeedForwardNetwork(nn.Module):
     """
         Feed Forward Network layer in the Transformer model
     """
-    def __init__(self, args, embed_dim, ffn_dim, dropout_module=None):
+    def __init__(self, args=None, embed_dim=None, ffn_dim=None, dropout_module=None):
         super().__init__()
         self.embed_dim = embed_dim
         self.quant_noise = getattr(args, "quant_noise_pq", 0)
         self.quant_noise_block_size = getattr(args, "quant_noise_pq_block_size", 8)
-        self.activation_fn = utils.get_activation_fn(
-            activation=str(args.activation_fn)
-            if getattr(args, "activation_fn", None) is not None
-            else "relu"
-        )
-        activation_dropout_p = getattr(args, "activation_dropout", 0) or 0
+        self.activation_fn = utils.get_activation_fn(activation="gelu")
+            #activation=str(args.activation_fn)
+            #if getattr(args, "activation_fn", None) is not None
+            #else "relu"
+        #)
+        #print(f"self.activation_fn = {self.activation_fn}")
+        #exit(0)
+        activation_dropout_p = 0 #getattr(args, "activation_dropout", 0) or 0
         if activation_dropout_p == 0:
             # for backwards compatibility with models that use args.relu_dropout
-            activation_dropout_p = getattr(args, "relu_dropout", 0) or 0
+            activation_dropout_p = 0 #getattr(args, "relu_dropout", 0) or 0
         self.activation_dropout_module = FairseqDropout(
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
@@ -78,9 +80,9 @@ class FeedForwardNetwork(nn.Module):
             self.quant_noise,
             self.quant_noise_block_size,
         )
-        self.dropout_module = FairseqDropout(
-                args.dropout, module_name=self.__class__.__name__
-            ) if not dropout_module else dropout_module
+        #print(f"args.dropout = {args.dropout}")
+        #exit(0)
+        self.dropout_module = FairseqDropout(0.1, module_name=self.__class__.__name__) if not dropout_module else dropout_module
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
