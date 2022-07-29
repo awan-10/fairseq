@@ -1,5 +1,5 @@
 export NCCL_DEBUG=WARN
-world_size=8
+world_size=1
 modelname='15b'
 #modelname='52b'
 
@@ -9,10 +9,10 @@ python -m fairseq_cli.interactive  ../downloads/en_moe_lm_${modelname} \
 --input input.txt  \
 --is-moe \
 --distributed-world-size ${world_size} \
---model-overrides "{'world_size': ${world_size}, 'moe_eval_capacity_token_fraction': 0.05}" \
+--model-overrides "{'world_size': ${world_size}, 'moe_eval_capacity_token_fraction': 0.05, 'moe_expert_count' : 4}" \
 --bpe gpt2 \
 --max-len-b 20 \
---beam 2 
+--beam 1
 
 # Documenting some things for help.
 
