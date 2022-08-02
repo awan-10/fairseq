@@ -476,7 +476,7 @@ def load_model_ensemble_and_task(
             ):
                 upgrade_state_for_langs_difference(state, cfg.model, task)
 
-            #model.load_state_dict(state["model"], strict=strict, model_cfg=cfg.model)
+            model.load_state_dict(state["model"], strict=strict, model_cfg=cfg.model)
 
             # reset state so it gets loaded for the next model in ensemble
             state = None
