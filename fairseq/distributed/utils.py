@@ -324,19 +324,19 @@ def distributed_main(i, main, cfg: FairseqConfig, kwargs):
     cfg.distributed_training.device_id = i
     if torch.cuda.is_available() and not cfg.common.cpu and not cfg.common.tpu:
         torch.cuda.set_device(cfg.distributed_training.device_id)
-    if cfg.distributed_training.distributed_rank is None:  # torch.multiprocessing.spawn
-        cfg.distributed_training.distributed_rank = kwargs.pop("start_rank", 0) + i
+    #if cfg.distributed_training.distributed_rank is None:  # torch.multiprocessing.spawn
+    #    cfg.distributed_training.distributed_rank = kwargs.pop("start_rank", 0) + i
 
-    cfg.distributed_training.distributed_rank = distributed_init(cfg)
+    cfg.distributed_training.distributed_rank = 0 #distributed_init(cfg)
 
-    after_distributed_init_fn = kwargs.pop("after_distributed_init_fn", None)
-    if after_distributed_init_fn:
-        cfg = after_distributed_init_fn(cfg)
+    #after_distributed_init_fn = kwargs.pop("after_distributed_init_fn", None)
+    #if after_distributed_init_fn:
+    #    cfg = after_distributed_init_fn(cfg)
 
     main(cfg, **kwargs)
 
-    if torch.distributed.is_initialized():
-        torch.distributed.barrier(get_global_group())
+    #if torch.distributed.is_initialized():
+    #    torch.distributed.barrier(get_global_group())
 
 
 def call_main(cfg: FairseqConfig, main, **kwargs):
@@ -345,7 +345,7 @@ def call_main(cfg: FairseqConfig, main, **kwargs):
 
     if cfg.distributed_training.distributed_init_method is not None:
         # distributed training
-        if not cfg.distributed_training.distributed_no_spawn:
+        if False: #not cfg.distributed_training.distributed_no_spawn:
             start_rank = cfg.distributed_training.distributed_rank
             cfg.distributed_training.distributed_rank = None  # assign automatically
             kwargs["start_rank"] = start_rank

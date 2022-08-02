@@ -176,7 +176,7 @@ def main(cfg: DictConfig, **unused_kwargs):
         models[0] = models[0].to(cfg.distributed_training.device_id)
 
     import deepspeed
-    deepspeed.init_inference(models[0], dtype=torch.half, replace_with_kernel_inject=True)
+    deepspeed.init_inference(models[0], dtype=torch.half, return_tuple=False, replace_with_kernel_inject=True)
 
     # Load ensemble
     ''' overrides = ast.literal_eval(cfg.common_eval.model_overrides)

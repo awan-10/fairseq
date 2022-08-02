@@ -1041,7 +1041,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
             # average probabilities over heads
             attn = attn.mean(dim=0)
-
+        import pdb; pdb.set_trace()
         if self.layer_norm is not None:
             x = self.layer_norm(x)
 

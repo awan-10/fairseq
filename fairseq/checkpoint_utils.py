@@ -468,6 +468,7 @@ def load_model_ensemble_and_task(
             # build model for ensemble
             print(".......... ... \n\n\n\n building model ..... ")
             model = task.build_model(cfg.model)
+            print(f" fs built model = {model}")
             #exit(0)
             if (
                 hasattr(cfg.model, "langs")

@@ -141,11 +141,11 @@ class MOELayer(Base):
         # Pro of --max-tokens: more flexible for MT variable sequence lengths
         # Con of --max-tokens: extra all-reduce needed to figure out optimal padding without running OOM
         if expected_bsz == 0:
-            expected_dim = int(distributed_utils.all_reduce(
-                reshaped_input_shape[0] * torch.ones((1,), dtype=torch.long, device=input.device),
-                group=dist.group.WORLD,
-                op="max",
-            ).item())
+            expected_dim = reshaped_input_shape[0] #int(distributed_utils.all_reduce(
+                #reshaped_input_shape[0] * torch.ones((1,), dtype=torch.long, device=input.device),
+                #group=dist.group.WORLD,
+                #op="max",
+            #).item())
             padded_input = torch.zeros(
                 (expected_dim, reshaped_input_shape[1]),
                 dtype=input.dtype, layout=input.layout, device=input.device)
