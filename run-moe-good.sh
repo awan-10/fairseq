@@ -1,5 +1,5 @@
 export NCCL_DEBUG=WARN
-world_size=8
+world_size=1
 modelname='15b'
 experts=512
 #modelname='52b'
@@ -17,6 +17,7 @@ python -m fairseq_cli.interactive  ../downloads/en_moe_lm_${modelname} \
 
 # Documenting some things for help.
 
+#--model-overrides "{'world_size': ${world_size}, 'moe_eval_capacity_token_fraction': 0.05, 'moe_expert_count' : ${experts}}" \
 # --input input.txt: the input prompt in a local file, e.g. DeepSpeed is
 # --bpe gpt2: needed for dict.txt included in the data path (the first argument)
 # --beam : beam 1 and 2 work for the moe branch -- default is set to 5 and that will fail if we don't specify --beam

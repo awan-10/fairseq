@@ -105,7 +105,7 @@ class FeedForwardNetwork(nn.Module):
         )
         return x
 
-
+ccount=0
 class TransformerEncoderLayer(nn.Module):
     """Encoder layer block.
 
@@ -463,12 +463,22 @@ class TransformerDecoderLayer(nn.Module):
         Returns:
             encoded output of shape `(seq_len, batch, embed_dim)`
         """
+        rrank = torch.distributed.get_rank()
+        global ccount
+        ccount = ccount + 1
+
+        if rrank == 0:
+            print(f"rank ={rrank}, count={ccount}, fs input type = {x.shape}, norm = {torch.norm(x)}")
+
         if need_head_weights:
             need_attn = True
 
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
+            if rrank == 0:
+                print(f"rank ={rrank}, count={ccount}, fs after 1st layer norm type = {x.shape}, norm = {torch.norm(x)}")
+
         if prev_self_attn_state is not None:
             prev_key, prev_value = prev_self_attn_state[:2]
             saved_state: Dict[str, Optional[Tensor]] = {
@@ -514,6 +524,10 @@ class TransformerDecoderLayer(nn.Module):
             need_weights=False,
             attn_mask=self_attn_mask,
         )
+
+        if rrank == 0:
+            print(f"rank ={rrank}, count={ccount}, fs after self_attn norm = {torch.norm(x)}")
+
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
         if not self.normalize_before:
@@ -550,8 +564,14 @@ class TransformerDecoderLayer(nn.Module):
                 x = self.encoder_attn_layer_norm(x)
 
         residual = x
+        if rrank == 0:
+            print(f"rank ={rrank}, count={ccount}, fs before final layer norm = {torch.norm(x)}")
+        
         if self.normalize_before:
             x = self.final_layer_norm(x)
+            if rrank == 0:
+                print(f"rank ={rrank}, count={ccount}, fs after final layer norm = {torch.norm(x)}")
+
         if not self.is_moe_layer or getattr(self.args, "alternate_decoder_ffn_embed_dim", 0.0) > 0:
             x = _ffn(
                 x,
@@ -565,10 +585,14 @@ class TransformerDecoderLayer(nn.Module):
         else:
             # x - seq_len, batch_size, model_dim
             x = x.transpose(0, 1) # batch_size, seq_len, model_dim
+            if rrank == 0:
+                print(f"rank ={rrank}, count={ccount}, fs before moe_layer shape = {x.shape}, norm = {torch.norm(x)}\n")
             if getattr(self.args, "use_moe_pad_mask", False):
                 x, l_aux = self.moe_layer(x, input_padding_mask=self_attn_padding_mask)
             else:
                 x, l_aux = self.moe_layer(x)
+                if rrank == 0:
+                    print(f"rank ={rrank}, count={ccount}, fs after moe_layer shape = {x.shape}, norm = {torch.norm(x)}\n")
             x = x.transpose(0, 1) # seq_len, batch_size, model_dim
         x = self.residual_connection(x, residual)
         if not self.normalize_before:

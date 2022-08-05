@@ -47,6 +47,7 @@ def fsdp_wrap_expert(args, layer, min_num_params=0):
     pg_size = process_group.size()
     num_experts = world_size/pg_size
 
+    print(f"fairseq moe num_experts = {num_experts},{len(layer.moe_layer.experts)}")
     for i, expert in enumerate(layer.moe_layer.experts):
         layer.moe_layer.experts[i] = fsdp_wrap(
             expert, process_group=process_group, min_num_params=0

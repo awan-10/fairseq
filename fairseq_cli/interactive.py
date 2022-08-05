@@ -170,12 +170,12 @@ def main(cfg: DictConfig, **unused_kwargs):
     
     use_fp16 = cfg.common.fp16
     use_cuda = torch.cuda.is_available() and not cfg.common.cpu
-    if use_cuda:
-        torch.cuda.set_device(cfg.distributed_training.device_id)
-        print(f"using cuda device {cfg.distributed_training.device_id}")
-        models[0] = models[0].to(cfg.distributed_training.device_id)
+    #if use_cuda:
+    #    torch.cuda.set_device(cfg.distributed_training.device_id)
+    #    print(f"using cuda device {cfg.distributed_training.device_id}")
+    #    models[0] = models[0].to(cfg.distributed_training.device_id)
 
-    #import deepspeed
+    import deepspeed
     #deepspeed.init_inference(models[0], dtype=torch.half, replace_with_kernel_inject=True)
 
     # Load ensemble
@@ -209,6 +209,7 @@ def main(cfg: DictConfig, **unused_kwargs):
 
         if is_moe:
             # For moe models, we want to enable padding in moe layer, so not calling this.
+            print(f"fs moe -- prepare for inference")
             model.prepare_for_inference_(cfg)
 
     assert len(models) > 0

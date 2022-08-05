@@ -466,8 +466,9 @@ def load_model_ensemble_and_task(
                 task.load_state_dict(state["task_state"])
 
             # build model for ensemble
-            print(".......... ... \n\n\n\n building model ..... ")
+
             model = task.build_model(cfg.model)
+            #print(f".......... ... \n\n\n\n built model = {model}..... ")
             #exit(0)
             if (
                 hasattr(cfg.model, "langs")
@@ -476,7 +477,7 @@ def load_model_ensemble_and_task(
             ):
                 upgrade_state_for_langs_difference(state, cfg.model, task)
 
-            model.load_state_dict(state["model"], strict=strict, model_cfg=cfg.model)
+            #model.load_state_dict(state["model"], strict=strict, model_cfg=cfg.model)
 
             # reset state so it gets loaded for the next model in ensemble
             state = None

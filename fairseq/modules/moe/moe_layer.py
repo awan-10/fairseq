@@ -92,6 +92,7 @@ class MOELayer(Base):
         self.in_generation = False
         self.a2a_cuda_event_intervals = []
         self.a2a_cpu_time_ms = 0.0
+        print(f"fs moe layer self.world_size = {self.world_size}, self.all2all_size={self.all2all_size}, self.num_local_experts = {self.num_local_experts}")
 
     def forward(self, *input: Tensor, input_padding_mask=None, **kwargs: Any) -> Tensor:
         assert len(input) == 1, "only single input Tensor supported"
